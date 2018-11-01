@@ -1,0 +1,6 @@
+* Usage
+
+content TK
+
+* Build a new server
+Use the forks on elixir-lsp since they have logic for macro expansion
