@@ -46,6 +46,15 @@
 (defvar lsp-elixir--project-settings nil
   "Where lsp-elixir keeps its project-level settings")
 
+(defvar lsp-elixir-project-root-path-cache nil
+  "Variable which holds the cached project root path.")
+
+(defconst lsp-elixir-project-hex-pkg-indicator ".hex"
+  "File which indicates the root directory of an Elixir Hex package.")
+
+(defconst lsp-elixir-project-mix-project-indicator "mix.exs"
+  "File which indicates the root directory of an Elixir Mix project.")
+
 (lsp-define-stdio-client
  lsp-elixir-mode
  "elixir"
@@ -88,15 +97,6 @@ meaningful to the user."
                   project-root
                 default-directory)))
     dir))
-
-(defvar lsp-elixir-project-root-path-cache nil
-  "Variable which holds the cached project root path.")
-
-(defconst lsp-elixir-project-hex-pkg-indicator ".hex"
-  "File which indicates the root directory of an Elixir Hex package.")
-
-(defconst lsp-elixir-project-mix-project-indicator "mix.exs"
-  "File which indicates the root directory of an Elixir Mix project.")
 
 (defun lsp-elixir-project-root (&optional dir)
   "Return root directory of the current Elixir Mix project.
