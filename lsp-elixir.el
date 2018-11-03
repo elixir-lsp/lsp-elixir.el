@@ -41,7 +41,7 @@
   :group 'lsp-elixir-server)
 
 (defconst lsp-elixir-server-root-path
-  (concat (file-name-directory load-file-name) "elixir-ls/"))
+  (concat (file-name-directory (or load-file-name buffer-file-name)) "elixir-ls/"))
 
 (defvar lsp-elixir--project-settings nil
   "Where lsp-elixir keeps its project-level settings")
@@ -80,6 +80,49 @@ meaningful to the user."
     (save-excursion (goto-char start-pos)
                     (previous-line)
                     (insert insertable))))
+
+(defun lsp-elixir-project-root-or-default-dir ()
+  "Return the current Elixir mix project root or `default-directory'."
+  (let* ((project-root (lsp-elixir-project-root))
+         (dir (if project-root
+                  project-root
+                default-directory)))
+    dir))
+
+(defvar lsp-elixir-project-root-path-cache nil
+  "Variable which holds the cached project root path.")
+
+(defconst lsp-elixir-project-hex-pkg-indicator ".hex"
+  "File which indicates the root directory of an Elixir Hex package.")
+
+(defconst lsp-elixir-project-mix-project-indicator "mix.exs"
+  "File which indicates the root directory of an Elixir Mix project.")
+
+(defun lsp-elixir-project-root (&optional dir)
+  "Return root directory of the current Elixir Mix project.
+
+It starts walking the directory tree to find the Elixir Mix root directory
+from `default-directory'. If DIR is non-nil it starts walking the
+directory from there instead."
+  (if (and lsp-elixir-project-root-path-cache
+           (string-prefix-p lsp-elixir-project-root-path-cache
+                            (expand-file-name default-directory)))
+      lsp-elixir-project-root-path-cache
+    (let* ((dir (file-name-as-directory (or dir (expand-file-name default-directory))))
+           (present-files (directory-files dir)))
+      (cond ((lsp-elixir-project-top-level-dir-p dir)
+             nil)
+            ((-contains-p present-files lsp-elixir-project-hex-pkg-indicator)
+             (lsp-elixir-project-root (file-name-directory (directory-file-name dir))))
+            ((-contains-p present-files lsp-elixir-project-mix-project-indicator)
+             (setq lsp-elixir-project-root-path-cache dir)
+             dir)
+            (t
+             (lsp-elixir-project-root (file-name-directory (directory-file-name dir))))))))
+
+(defun lsp-elixir-project-top-level-dir-p (dir)
+  "Return non-nil if DIR is the top level directory."
+  (equal dir (file-name-directory (directory-file-name dir))))
 
 (defun lsp-elixir--lsp-server-path-for-current-project ()
   `(,(concat lsp-elixir-server-root-path
