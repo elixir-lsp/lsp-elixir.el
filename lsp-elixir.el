@@ -58,7 +58,7 @@
 (lsp-define-stdio-client
  lsp-elixir-mode
  "elixir"
- (lambda () (lsp-elixir-project-root-or-default-dir))
+ (lambda () (lsp-elixir--root-dir))
  (lsp-elixir--lsp-server-path-for-current-project))
 ;; '("~/src/projects/lsp-elixir.el/elixir-ls/erl19/language_server.sh")
 
@@ -66,68 +66,37 @@
 ;; (add-hook 'lsp-elixir-mode-hook 'lsp-ui-mode)
 ;; (add-hook 'lsp-after-open-hook 'lsp-enable-imenu)
 
-(defun lsp-elixir-macro-expand (start-pos end-pos)
-  "Expands the selected code once.
+;; file/dir utilities
 
-This function has some string manipulation logic because elixir_sense returns
-a string that begins and ends with parens, so we get rid of them to print something
-meaningful to the user."
-  (interactive "r")
-  (lsp--cur-workspace-check)
-  (let* ((selected-code (buffer-substring-no-properties start-pos end-pos))
-         (response (lsp-send-request
-                    (lsp-make-request
-                     "elixirDocument/macroExpansion"
-                     `(:context (:selection ,selected-code)
-                                :position ,(lsp--cur-position)
-                                :textDocument ,(lsp--make-text-document-item)))))
-         (expansion (gethash "expand" response))
-         (lines (cdr (butlast (split-string expansion "\n"))))
-         (insertable (string-join
-                      (mapcar (lambda (x) (concat "# " x)) lines)
-                      "\n")))
-    (save-excursion (goto-char start-pos)
-                    (previous-line)
-                    (insert insertable))))
+(defun lsp-elixir--root-dir ()
+  (or lsp-elixir-project-root-path-cache
+      (setq-local lsp-elixir-project-root-path-cache
+                  (lsp-elixir-project-root-or-default-dir))))
 
-(defun lsp-elixir-project-root-or-default-dir ()
-  "Return the current Elixir mix project root or `default-directory'."
-  (let* ((project-root (lsp-elixir-project-root))
-         (dir (if project-root
-                  project-root
-                default-directory)))
-    dir))
+(defun lsp-elixir-project-root-or-default-dir (&optional dir)
+  "Finds the project root from the provided directory. If no directory
+is provided, use the directory for the current buffer. Returns nil if not
+in a project."
+  (let* ((starting-directory (file-name-directory (or dir default-directory)))
+         (root (lsp-elixir--find-next-possible-root starting-directory)))
+    (if root
+        (lsp-elixir--find-next-possible-root
+         (file-name-directory (directory-file-name root)))
+      starting-directory)))
 
-(defun lsp-elixir-project-root (&optional dir)
-  "Return root directory of the current Elixir Mix project.
+(defun lsp-elixir--find-next-possible-root (dir)
+  "Finds the next directory closer to the root starting from the argument
+which may be the project root.
+Returns nil if no new root is found."
+  (or (locate-dominating-file dir lsp-elixir-project-mix-project-indicator)
+      (locate-dominating-file dir lsp-elixir-project-hex-pkg-indicator)))
 
-It starts walking the directory tree to find the Elixir Mix root directory
-from `default-directory'. If DIR is non-nil it starts walking the
-directory from there instead."
-  (if (and lsp-elixir-project-root-path-cache
-           (string-prefix-p lsp-elixir-project-root-path-cache
-                            (expand-file-name default-directory)))
-      lsp-elixir-project-root-path-cache
-    (let* ((dir (file-name-as-directory (or dir (expand-file-name default-directory))))
-           (present-files (directory-files dir)))
-      (cond ((lsp-elixir-project-top-level-dir-p dir)
-             nil)
-            ((-contains-p present-files lsp-elixir-project-hex-pkg-indicator)
-             (lsp-elixir-project-root (file-name-directory (directory-file-name dir))))
-            ((-contains-p present-files lsp-elixir-project-mix-project-indicator)
-             (setq lsp-elixir-project-root-path-cache dir)
-             dir)
-            (t
-             (lsp-elixir-project-root (file-name-directory (directory-file-name dir))))))))
-
-(defun lsp-elixir-project-top-level-dir-p (dir)
-  "Return non-nil if DIR is the top level directory."
-  (equal dir (file-name-directory (directory-file-name dir))))
+;; server version utilities
 
 (defun lsp-elixir--lsp-server-path-for-current-project ()
   `(,(concat lsp-elixir-server-root-path
            "erl"
-           (lsp-elixir--server-erlang-version (lsp-elixir-project-root-or-default-dir))
+           (lsp-elixir--server-erlang-version (lsp-elixir--root-dir))
            "/"
            "language_server"
            "."
@@ -184,5 +153,31 @@ directory from there instead."
 
 (defun lsp-elixir--config-file-path ()
   (locate-user-emacs-file "lsp-elixir-project-settings.el"))
+
+;; additional behavior
+
+(defun lsp-elixir-macro-expand (start-pos end-pos)
+  "Expands the selected code once.
+
+This function has some string manipulation logic because elixir_sense returns
+a string that begins and ends with parens, so we get rid of them to print something
+meaningful to the user."
+  (interactive "r")
+  (lsp--cur-workspace-check)
+  (let* ((selected-code (buffer-substring-no-properties start-pos end-pos))
+         (response (lsp-send-request
+                    (lsp-make-request
+                     "elixirDocument/macroExpansion"
+                     `(:context (:selection ,selected-code)
+                                :position ,(lsp--cur-position)
+                                :textDocument ,(lsp--make-text-document-item)))))
+         (expansion (gethash "expand" response))
+         (lines (cdr (butlast (split-string expansion "\n"))))
+         (insertable (string-join
+                      (mapcar (lambda (x) (concat "# " x)) lines)
+                      "\n")))
+    (save-excursion (goto-char start-pos)
+                    (previous-line)
+                    (insert insertable))))
 
 (provide 'lsp-elixir)
