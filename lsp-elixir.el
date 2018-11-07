@@ -107,7 +107,7 @@ Returns nil if no new root is found."
          (project-erlang-version (or (gethash project-path
                                               (gethash "lsp-elixir-projects" project-settings-map))
                                      (completing-read "Choose which version of Erlang the LSP server should use: "
-                                                      '("19" "20")
+                                                      '("19" "20" "21")
                                                       nil
                                                       t
                                                       ))))
