@@ -24,7 +24,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary
+;;; Commentary:
 
 ;; Install through MELPA, then add the following line to your config:
 ;; `(add-hook 'elixir-mode-hook #'lsp)`
@@ -39,7 +39,7 @@
   :group 'lsp-elixir)
 
 (defcustom lsp-elixir-server-extension nil
-  "Help lsp-elixir decide if you are running on a *nix or Microsoft machine"
+  "Help lsp-elixir decide if you are running on a *nix or Microsoft machine."
   :type '(choice (const :tag "Windows" bat)
                  (const :tag "*nix" sh))
   :group 'lsp-elixir-server)
@@ -48,7 +48,7 @@
   (concat (file-name-directory (or load-file-name buffer-file-name)) "elixir-ls/"))
 
 (defvar lsp-elixir--project-settings nil
-  "Where lsp-elixir keeps its project-level settings")
+  "Where lsp-elixir keeps its project-level settings.")
 
 (defvar lsp-elixir-project-root-path-cache nil
   "Variable which holds the cached project root path.")
@@ -74,14 +74,15 @@
 ;; file/dir utilities
 
 (defun lsp-elixir--root-dir ()
+  "Private function to find the root directory for a given file."
   (or lsp-elixir-project-root-path-cache
       (setq-local lsp-elixir-project-root-path-cache
                   (lsp-elixir-project-root-or-default-dir))))
 
 (defun lsp-elixir-project-root-or-default-dir (&optional dir)
-  "Finds the project root from the provided directory. If no directory
-is provided, use the directory for the current buffer. Returns nil if not
-in a project."
+  "Return the root directory of the project or nil if not in a project.
+
+Optional argument DIR is the starting directory. If not provided, use directory for current buffer."
   (let* ((starting-directory (file-name-directory (or dir default-directory)))
          (root (lsp-elixir--find-next-possible-root starting-directory)))
     (if root
@@ -90,15 +91,16 @@ in a project."
       starting-directory)))
 
 (defun lsp-elixir--find-next-possible-root (dir)
-  "Finds the next directory closer to the root starting from the argument
-which may be the project root.
-Returns nil if no new root is found."
+  "Find the next directory closer to the root.
+Returns nil if no new root is found.
+Argument DIR is the directory from which to start traversing up the tree."
   (or (locate-dominating-file dir lsp-elixir-project-mix-project-indicator)
       (locate-dominating-file dir lsp-elixir-project-hex-pkg-indicator)))
 
 ;; server version utilities
 
 (defun lsp-elixir--lsp-server-path-for-current-project ()
+  "Private function to find the path to the relevant LSP server."
   `(,(concat lsp-elixir-server-root-path
            "erl"
            (lsp-elixir--server-erlang-version (lsp-elixir--root-dir))
@@ -108,6 +110,8 @@ Returns nil if no new root is found."
            (lsp-elixir--server-extension))))
 
 (defun lsp-elixir--server-erlang-version (project-path)
+  "Private function to find which Erlang version to use for the given project.
+Argument PROJECT-PATH is the path to the target project."
   (let* ((project-settings-map (lsp-elixir--project-settings))
          (project-erlang-version (or (gethash project-path
                                               (gethash "lsp-elixir-projects" project-settings-map))
@@ -122,6 +126,7 @@ Returns nil if no new root is found."
     project-erlang-version))
 
 (defun lsp-elixir--server-extension ()
+  "Private function to find the kind of executable to run on the host OS."
   (let ((extension (or lsp-elixir-server-extension
                        (completing-read "Choose the kind of executable that runs on this system: "
                                         '("sh" "bat")
@@ -132,6 +137,7 @@ Returns nil if no new root is found."
     extension))
 
 (defun lsp-elixir--project-settings ()
+  "Private function to find the project settings (Elixir / Erlang version)."
   (or lsp-elixir--project-settings
       (setq lsp-elixir--project-settings
             (or (and (file-exists-p (lsp-elixir--config-file-path))
@@ -139,24 +145,30 @@ Returns nil if no new root is found."
                 (lsp-elixir--project-init-settings-file)))))
 
 (defun lsp-elixir--project-read-file ()
+  "Private function to load the project settings from the cache file."
   (with-temp-buffer
     (insert-file-contents (lsp-elixir--config-file-path))
     (goto-char (point-min)) (read (current-buffer))))
 
 (defun lsp-elixir--project-init-settings-file ()
+  "Private function to initialize the cache file."
   (lsp-elixir--project-save-settings (lsp-elixir--default-project-settings-map)))
 
 (defun lsp-elixir--project-save-settings (project-settings-map)
+  "Private function to save the current project settings to the cache file.
+Argument PROJECT-SETTINGS-MAP is the current set of project settings to be saved to the cache file."
   (with-temp-file (lsp-elixir--config-file-path)
     (prin1 project-settings-map (current-buffer))))
 
 (defun lsp-elixir--default-project-settings-map ()
+  "Private function to initialize the cache data."
   (let ((default-map (make-hash-table :test 'equal)))
     (puthash "lsp-elixir-projects-version" 1 default-map)
     (puthash "lsp-elixir-projects" (make-hash-table :test 'equal) default-map)
     default-map))
 
 (defun lsp-elixir--config-file-path ()
+  "Private function to point to the hardcoded project settings file."
   (locate-user-emacs-file "lsp-elixir-project-settings.el"))
 
 ;; additional behavior
@@ -165,8 +177,10 @@ Returns nil if no new root is found."
   "Expands the selected code once.
 
 This function has some string manipulation logic because elixir_sense returns
-a string that begins and ends with parens, so we get rid of them to print something
-meaningful to the user."
+a string that begins and ends with parens, so we get rid of them to print
+something meaningful to the user.
+Argument START-POS is the beginning of the region.
+Argument END-POS is the end of the region."
   (interactive "r")
   (lsp--cur-workspace-check)
   (let* ((selected-code (buffer-substring-no-properties start-pos end-pos))
