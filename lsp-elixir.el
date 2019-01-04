@@ -24,6 +24,11 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary
+
+;; Install through MELPA, then add the following line to your config:
+;; `(add-hook 'elixir-mode-hook #'lsp)`
+
 ;;; Code:
 
 (require 'lsp-mode)
@@ -181,3 +186,5 @@ meaningful to the user."
                     (insert insertable))))
 
 (provide 'lsp-elixir)
+
+;;; lsp-elixir.el ends here
