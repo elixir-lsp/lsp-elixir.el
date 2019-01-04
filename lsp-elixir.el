@@ -1,5 +1,4 @@
--*- lexical-binding: t; -*-
-;;; lsp-elixir.el --- Elixir tooling integration into Emacs
+;;; lsp-elixir.el --- Elixir tooling integration into Emacs -*- lexical-binding: t; -*-
 
 ;; Copyright © 2018 Aldric Giacomoni
 ;;
