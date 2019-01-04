@@ -26,7 +26,6 @@
 
 ;;; Code:
 
-(require 'lsp-imenu)
 (require 'lsp-mode)
 
 (defgroup lsp-elixir-server nil
@@ -55,11 +54,12 @@
 (defconst lsp-elixir-project-mix-project-indicator "mix.exs"
   "File which indicates the root directory of an Elixir Mix project.")
 
-(lsp-define-stdio-client
- lsp-elixir-mode
- "elixir"
- (lambda () (lsp-elixir--root-dir))
- (lsp-elixir--lsp-server-path-for-current-project))
+(lsp-register-client
+ (make-lsp-client :new-connection (lsp-stdio-connection "elixir")
+                  :major-modes '(elixir-mode)
+                  :priority -1
+                  :server-id 'elixir-ls))
+
 ;; '("~/src/projects/lsp-elixir.el/elixir-ls/erl19/language_server.sh")
 
 ;; TODO what to do with these hooks?
