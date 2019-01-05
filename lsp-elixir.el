@@ -6,7 +6,7 @@
 ;; Maintainer: Aldric Giacomoni <trevoke@gmail.com>
 ;; URL: http://www.github.com/trevoke/lsp-elixir.el
 ;; Version: 0.1.0
-;; Package-Requires: ((lsp-mode "5.0") (emacs "24.4"))
+;; Package-Requires: ((lsp-mode "20190104.2105") (emacs "24.4"))
 ;; Keywords: languages, elixir, elixirc, mix, hex, alchemist
 
 ;; This file is not part of GNU Emacs.
