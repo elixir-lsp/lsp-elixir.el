@@ -60,9 +60,9 @@
   "File which indicates the root directory of an Elixir Mix project.")
 
 (lsp-register-client
- (make-lsp-client :new-connection (lsp-stdio-connection "elixir")
+ (make-lsp-client :new-connection (lsp-stdio-connection #'lsp-elixir--lsp-server-path-for-current-project)
                   :major-modes '(elixir-mode)
-                  :priority -1
+                  :priority 1
                   :server-id 'elixir-ls))
 
 ;; '("~/src/projects/lsp-elixir.el/elixir-ls/erl19/language_server.sh")
@@ -101,13 +101,13 @@ Argument DIR is the directory from which to start traversing up the tree."
 
 (defun lsp-elixir--lsp-server-path-for-current-project ()
   "Private function to find the path to the relevant LSP server."
-  `(,(concat lsp-elixir-server-root-path
-           "erl"
-           (lsp-elixir--server-erlang-version (lsp-elixir--root-dir))
-           "/"
-           "language_server"
-           "."
-           (lsp-elixir--server-extension))))
+  `,(concat lsp-elixir-server-root-path
+             "erl"
+             (lsp-elixir--server-erlang-version (lsp-elixir--root-dir))
+             "/"
+             "language_server"
+             "."
+             (lsp-elixir--server-extension)))
 
 (defun lsp-elixir--server-erlang-version (project-path)
   "Private function to find which Erlang version to use for the given project.
