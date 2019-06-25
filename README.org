@@ -2,7 +2,9 @@
 
 Install through MELPA, then add the following line to your config:
 
-`(add-hook 'elixir-mode-hook #'lsp)`
+#+begin_src emacs-lisp
+(add-hook 'elixir-mode-hook #'lsp)
+#+end_src
 
 * Build a new server
 Use the forks on elixir-lsp since they have logic for macro expansion

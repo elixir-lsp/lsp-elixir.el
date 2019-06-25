@@ -59,12 +59,6 @@
 (defconst lsp-elixir-project-mix-project-indicator "mix.exs"
   "File which indicates the root directory of an Elixir Mix project.")
 
-(lsp-register-client
- (make-lsp-client :new-connection (lsp-stdio-connection #'lsp-elixir--lsp-server-path-for-current-project)
-                  :major-modes '(elixir-mode)
-                  :priority 1
-                  :server-id 'elixir-ls))
-
 ;; '("~/src/projects/lsp-elixir.el/elixir-ls/erl19/language_server.sh")
 
 ;; TODO what to do with these hooks?
@@ -189,6 +183,7 @@ Argument END-POS is the end of the region."
                      "elixirDocument/macroExpansion"
                      `(:context (:selection ,selected-code)
                                 :position ,(lsp--cur-position)
+                                ;; FIXME: Undefined function
                                 :textDocument ,(lsp--make-text-document-item)))))
          (expansion (gethash "expand" response))
          (lines (cdr (butlast (split-string expansion "\n"))))
@@ -198,6 +193,12 @@ Argument END-POS is the end of the region."
     (save-excursion (goto-char start-pos)
                     (forward-line -1)
                     (insert insertable))))
+
+(lsp-register-client
+ (make-lsp-client :new-connection (lsp-stdio-connection #'lsp-elixir--lsp-server-path-for-current-project)
+                  :major-modes '(elixir-mode)
+                  :priority 1
+                  :server-id 'elixir-ls))
 
 (provide 'lsp-elixir)
 
