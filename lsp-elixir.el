@@ -110,7 +110,7 @@ Argument PROJECT-PATH is the path to the target project."
          (project-erlang-version (or (gethash project-path
                                               (gethash "lsp-elixir-projects" project-settings-map))
                                      (completing-read "Choose which version of Erlang the LSP server should use: "
-                                                      '("19" "20" "21")
+                                                      '("19" "20" "21" "22")
                                                       nil
                                                       t
                                                       ))))
